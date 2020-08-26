@@ -1,8 +1,12 @@
+import maps.EntryKeys;
+import maps.EntryValues;
+import maps.ReifiedEntry;
 
 /**
- * SkipList is an implementation of a Map based on a SkipList data structure.
+ * SkipList is an implementation of a sorted Map based on a SkipList data structure.
  */
 class SkipList<Key, Value>
+        implements Map<Key, Value>
     {
     // ----- constructors --------------------------------------------------------------------------
 
@@ -48,36 +52,39 @@ class SkipList<Key, Value>
     /**
      * The size of this SkipList.
      */
+    @Override
     public/private Int size;
 
-    // ----- SkipList operations -------------------------------------------------------------------
+    // ----- Map interface -------------------------------------------------------------------------
 
+    @Override
     SkipList clear()
         {
         top = new IndexNode(0);
         return this;
         }
 
+    @Override
     Boolean contains(Key key)
         {
-        Queue<BaseNode> previous = findPrevious(key);
-        BaseNode        prev     = previous.take();
-        return prev.is(EntryNode) && prev.key == key;
-        }
-
-    conditional Value get(Key key)
-        {
-        Queue<BaseNode> previous = findPrevious(key);
-        BaseNode        prev     = previous.take();
-
-        if (prev.is(EntryNode) && prev.key == key)
+        if (find(key))
             {
-            return True, prev.value;
+            return True;
             }
-
         return False;
         }
 
+    @Override
+    conditional Value get(Key key)
+        {
+        if (EntryNode node := find(key))
+            {
+            return True, node.value;
+            }
+        return False;
+        }
+
+    @Override
     SkipList put(Key key, Value value)
         {
         Queue<BaseNode> previous = findPrevious(key);
@@ -119,6 +126,17 @@ class SkipList<Key, Value>
         return this;
         }
 
+    @Override
+    SkipList putAll(Map<Key, Value> that)
+        {
+        for (Map<Key, Value>.Entry entry : that.entries)
+            {
+            put(entry.key, entry.value);
+            }
+        return this;
+        }
+
+    @Override
     SkipList remove(Key key)
         {
         Queue<BaseNode> previous = findPrevious(key, False);
@@ -142,7 +160,25 @@ class SkipList<Key, Value>
         return this;
         }
 
-    // ----- helper methods ------------------------------------------------------------------------
+    @Override
+    @Lazy public/private Set<Key> keys.calc()
+        {
+        return new EntryKeys<Key, Value>(this);
+        }
+
+    @Override
+    @Lazy public/private Collection<Value> values.calc()
+        {
+        return new EntryValues<Key, Value>(this);
+        }
+
+    @Override
+    @Lazy public/private EntrySet entries.calc()
+        {
+        return new EntrySet();
+        }
+
+    // ----- helpers -------------------------------------------------------------------------------
 
     /**
      * Calculate the probabilities used to determine what level an entry should be indexed to.
@@ -288,6 +324,109 @@ class SkipList<Key, Value>
         return previous.lifoQueue;
         }
 
+    /**
+     * Find the EntryNode in the SkipList mapped to the specified key.
+     *
+     * @param key  the key to look up in the SkipList
+     *
+     * @return a True iff the EntryNode associated with the specified key exists in the map
+     * @return the EntryNode associated with the specified key (conditional)
+     */
+    conditional EntryNode find(Key key)
+        {
+        BaseNode node = top;
+
+        while(true)
+            {
+            BaseNode? next  = node.next;
+            BaseNode? below = node.below;
+            if (next.is(KeyNode))
+                {
+                Orderer? orderer = this.orderer;
+                Ordered  order;
+
+                if (orderer == Null)
+                    {
+                    assert Key.is(Type<Orderable>);
+                    order = next.key <=> key;
+                    }
+                else
+                    {
+                    order = orderer(key, next.key);
+                    }
+
+                if (order == Lesser)
+                    {
+                    // next node is less than key, go right
+                    node = next;
+                    }
+                else if (order == Equal)
+                    {
+                    // next node is equal to key so we've found either the entry we want or the
+                    // top of the KeyNodes for the entry we want so just go down to the bottom
+                    if (next.is(EntryNode))
+                        {
+                        // Next node is an EntryNode so we've found what we're looking for
+                        return True, next;
+                        }
+
+                    next = next.below;
+                    while (next.is(KeyNode))
+                        {
+                        if (next.is(EntryNode))
+                            {
+                            // Found the EntryNode we're looking for
+                            return True, next;
+                            }
+                        // not at the EntryNode, keep going down
+                        next = next.below;
+                        }
+                    // There was no EntryNode at the bottom of the pile of KeyNodes
+                    // The key is not in the list but we shouldn't actually ever get here
+                    return False;
+                    }
+                else
+                    {
+                    // next node is higher, go down
+                    if (below == Null)
+                        {
+                        // There is now down, so we're done - the key is not found.
+                        break;
+                        }
+                    node = below;
+                    }
+                }
+            else if (below == Null)
+                {
+                // no next node and cannot go lower so we're done
+                break;
+                }
+            else
+                {
+                // no next node, go down
+                node = below;
+                }
+            }
+
+        // The key was not found
+        return False;
+        }
+
+    /**
+     * Get the first EntryNode in this SkipList.
+     *
+     * @return the first EntryNode in this SkipList or Null if the SkipList is empty
+     */
+    EntryNode? firstEntry()
+        {
+        IndexNode node = top;
+        while(node.level > 0)
+            {
+            node = node.below;
+            }
+        BaseNode? next = node.next;
+        return next.is(EntryNode) ? next : Null;
+        }
 
     String print()
         {
@@ -295,12 +434,20 @@ class SkipList<Key, Value>
         BaseNode? node = top;
         while (node != Null)
             {
-            buf.add(node.toString());
-            buf.add('\n');
+            buf.append(node.toString());
+            buf.append('\n');
             node = node.below;
             }
         return buf.toString();
         }
+
+    // ----- Orderer -------------------------------------------------------------------------------
+
+    /**
+     * An Orderer is a function that compares two Keys for order to use to maintain ordering
+     * of entries in the SkipList.
+     */
+    typedef function Ordered (Key, Key) Orderer;
 
     // ----- BaseNode ------------------------------------------------------------------------------
 
@@ -329,12 +476,12 @@ class SkipList<Key, Value>
         String toString()
             {
             val buf = new StringBuffer(10);
-            buf.add("I(");
-            buf.add(level.toString());
-            buf.add(") ");
+            buf.append("I(");
+            buf.append(level.toString());
+            buf.append(") ");
             if (next.is(BaseNode))
                 {
-                buf.add(next.toString());
+                buf.append(next.toString());
                 }
             return buf.toString();
             }
@@ -361,17 +508,17 @@ class SkipList<Key, Value>
         String toString()
             {
             val buf = new StringBuffer(10);
-            buf.add("K(");
-            buf.add(key.toString());
+            buf.append("K(");
+            buf.append(key.toString());
             if (below.is(KeyNode))
                 {
-                buf.add(",");
-                buf.add(below.as(KeyNode).key.toString());
+                buf.append(",");
+                buf.append(below.as(KeyNode).key.toString());
                 }
-            buf.add(") ");
+            buf.append(") ");
             if (next.is(BaseNode))
                 {
-                buf.add(next.toString());
+                buf.append(next.toString());
                 }
             return buf.toString();
             }
@@ -397,16 +544,181 @@ class SkipList<Key, Value>
         String toString()
             {
             val buf = new StringBuffer(10);
-            buf.add("E(");
-            buf.add(key.toString());
-            buf.add("=");
-            buf.add(value.toString());
-            buf.add(") ");
+            buf.append("E(");
+            buf.append(key.toString());
+            buf.append("=");
+            buf.append(value.toString());
+            buf.append(") ");
             if (next.is(BaseNode))
                 {
-                buf.add(next.toString());
+                buf.append(next.toString());
                 }
             return buf.toString();
+            }
+        }
+
+    // ----- CursorEntry implementation ------------------------------------------------------------
+
+    /**
+     * An implementation of Entry that can be used as a cursor over any number of keys, and
+     * delegates back to the map for its functionality.
+     */
+    class CursorEntry
+            implements Entry
+        {
+        @Unassigned
+        private EntryNode node;
+
+        protected CursorEntry advance(EntryNode node)
+            {
+            this.node   = node;
+            this.exists = true;
+            return this;
+            }
+
+        @Override
+        Key key.get()
+            {
+            return node.key;
+            }
+
+        @Override
+        public/protected Boolean exists;
+
+        @Override
+        Value value
+            {
+            @Override
+            Value get()
+                {
+                if (exists)
+                    {
+                    return node.value;
+                    }
+                else
+                    {
+                    throw new OutOfBounds("entry does not exist for key=" + key);
+                    }
+                }
+
+            @Override
+            void set(Value value)
+                {
+                verifyNotPersistent();
+                if (exists)
+                    {
+                    node.value = value;
+                    }
+                else
+                    {
+                    this.SkipList.put(key, value);
+                    assert node := this.SkipList.find(key);
+                    exists = true;
+                    }
+                }
+            }
+
+        @Override
+        void remove()
+            {
+            if (verifyNotPersistent() & exists)
+                {
+                assert this.SkipList.keys.removeIfPresent(key);
+                exists = false;
+                }
+            }
+
+        @Override
+        Map<Key, Value>.Entry reify()
+            {
+            return new ReifiedEntry<Key, Value>(this.SkipList, key);
+            }
+        }
+
+    // ----- EntrySet implementation ---------------------------------------------------------------
+
+    /**
+     * A representation of all of the HashEntry objects in the Map.
+     */
+    class EntrySet
+            implements Set<Entry>
+        {
+//        @Override
+//        Mutability mutability.get()
+//            {
+//            return Mutable;
+//            }
+
+        @Override
+        Iterator<Entry> iterator()
+            {
+            return new Iterator()
+                {
+                EntryNode?  current = null;
+                EntryNode?  next    = this.SkipList.firstEntry();
+                CursorEntry entry   = new CursorEntry();
+
+                @Override
+                conditional Entry next()
+                    {
+                    if (next != null)
+                        {
+                        next = current.next;
+                        return True, entry.advance(node);
+                        }
+
+                    return False;
+                    }
+                };
+            }
+
+        @Override
+        EntrySet remove(Entry entry)
+            {
+            verifyMutable();
+            this.SkipList.remove(entry.key, entry.value);
+            return this;
+            }
+
+        @Override
+        (EntrySet, Int) removeIf(function Boolean (Entry) shouldRemove)
+            {
+//            Int          removed     = 0;
+//            HashEntry?[] buckets     = this.HashMap.buckets;
+//            Int          bucketCount = buckets.size;
+//            CursorEntry  entry       = new CursorEntry();
+//            for (Int i = 0; i < bucketCount; ++i)
+//                {
+//                HashEntry? currEntry = buckets[i];
+//                HashEntry? prevEntry = null;
+//                while (currEntry != null)
+//                    {
+//                    if (shouldRemove(entry.advance(currEntry)))
+//                        {
+//                        // move to the next entry (the current one is getting unlinked)
+//                        currEntry = currEntry.next;
+//
+//                        // unlink the entry that is being removed
+//                        if (prevEntry != null)
+//                            {
+//                            prevEntry.next = currEntry;
+//                            }
+//                        else
+//                            {
+//                            buckets[i] = currEntry;
+//                            }
+//                        ++removed;
+//                        ++this.HashMap.removeCount;
+//                        }
+//                    else
+//                        {
+//                        prevEntry = currEntry;
+//                        currEntry = currEntry.next;
+//                        }
+//                    }
+//                }
+
+            return this, removed;
             }
         }
 
