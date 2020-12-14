@@ -86,6 +86,10 @@ import ecstasy.io.InputStream;
 import ecstasy.io.OutputStream;
 import ecstasy.io.Reader;
 
+import ecstasy.net.URI;
+import ecstasy.proxy.WebServerProxy;
+import ecstasy.proxy.HttpRequestProxy;
+
 import ecstasy.numbers.BFloat16;
 import ecstasy.numbers.Bit;
 import ecstasy.numbers.Dec32;

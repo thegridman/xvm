@@ -1,0 +1,176 @@
+import ecstasy.reflect.Parameter;
+
+/**
+ * A default implementation of UriRouteMatch.
+ */
+class DefaultUriRouteMatch
+        implements UriRouteMatch
+    {
+    construct(UriMatchInfo info, UriRoute route)
+        {
+        this.info           = info;
+        this.route          = route;
+        this.variableValues = info.variableValues;
+        }
+
+    construct(UriMatchInfo info, UriRoute route, Map<String, Object> variableValues)
+        {
+        this.info           = info;
+        this.route          = route;
+        this.variableValues = variableValues;
+        }
+
+    public/private UriMatchInfo info;
+
+    @Override
+    public/private Map<String, Object> variableValues;
+
+    @Override
+    public/private UriRoute route;
+
+    @Override
+    Function<Tuple, Tuple> fn.get()
+        {
+        return route.executable.fn;
+        }
+
+    @Override
+    String uri.get()
+        {
+        return info.uri;
+        }
+
+    @Override
+    List<UriMatchVariable> variables.get()
+        {
+        return info.variables;
+        }
+
+    @Override
+    Map<String, UriMatchVariable> variableMap.get()
+        {
+        return info.variableMap;
+        }
+
+    @Override
+    Boolean consumes(MediaType? mediaType)
+        {
+        if (route.consumes.size > 0 && mediaType.is(MediaType))
+            {
+            return mediaType == MediaType.ALL_TYPE || explicitlyConsumes(mediaType);
+            }
+        else
+            {
+            return True;
+            }
+        }
+
+    @Override
+    Boolean explicitlyConsumes(MediaType contentType)
+        {
+        return route.consumes.contains(contentType);
+        }
+
+    @Override
+    Boolean produces(MediaType[] acceptableTypes)
+        {
+        return acceptableTypes.size == 0 || anyMediaTypesMatch(route.produces, acceptableTypes);
+        }
+
+    private Boolean anyMediaTypesMatch(MediaType[] producedTypes, MediaType[] acceptableTypes)
+        {
+        if (acceptableTypes.size == 0)
+            {
+            return True;
+            }
+        else
+            {
+            if (route.produces.contains(MediaType.ALL_TYPE))
+                {
+                return True;
+                }
+
+            for (MediaType acceptableType : acceptableTypes)
+                {
+                if (acceptableType == MediaType.ALL_TYPE || route.produces.contains(acceptableType))
+                    {
+                    return True;
+                    }
+                }
+            }
+        return False;
+        }
+
+    @Override
+    Tuple<Object> execute(Map<String, Object> parameterValues)
+        {
+        Tuple parameters = Tuple:();
+
+        if (fn.params.size == 0)
+            {
+            return fn.invoke(parameters);
+            }
+
+        for (Parameter param : fn.params)
+            {
+            if (String name := param.hasName())
+                {
+                if (Object paramValue := parameterValues.get(name))
+                    {
+                    parameters = parameters.add(convert(param, paramValue));
+                    }
+                else if (Object variableValue := variableValues.get(name))
+                    {
+                    parameters = parameters.add(convert(param, variableValue));
+                    }
+                else if (Object defaultValue := param.defaultValue())
+                    {
+                    parameters = parameters.add(defaultValue);
+                    }
+                }
+            else if (Object defaultValue := param.defaultValue())
+                {
+                parameters = parameters.add(defaultValue);
+                }
+            }
+
+        return fn.invoke(parameters);
+        }
+
+    private Object convert(Parameter parameter, Object value)
+        {
+        // ToDo:
+        return value;
+        }
+
+    @Override
+    UriRouteMatch newFulfilled(Map<String, Object> values, List<Parameter> parameters)
+        {
+@Inject
+Console console;
+console.println($"In newFulfilled values={values} parameters={parameters}");
+for (Map.Entry entry : values.entries)
+    {
+console.println($"In newFulfilled values.entry={entry}");
+    }
+        return new FulfilledUriRouteMatch(info, route, values, parameters);
+        }
+
+    static class FulfilledUriRouteMatch
+            extends DefaultUriRouteMatch
+        {
+        construct (UriMatchInfo        info,
+                   UriRoute            route,
+                   Map<String, Object> variableValues,
+                   List<Parameter>     requiredParameters)
+            {
+            construct DefaultUriRouteMatch(info, route, variableValues);
+            }
+
+        @Override
+        Tuple<Object> execute()
+            {
+            return execute(variableValues);
+            }
+        }
+    }
