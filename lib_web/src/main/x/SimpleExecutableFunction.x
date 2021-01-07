@@ -14,9 +14,13 @@ class SimpleExecutableFunction
      */
     construct(Method<Object, Tuple, Tuple> method, Object target)
         {
-        this.fn = method.bindTarget(target);
+        this.fn                = method.bindTarget(target);
+        this.conditionalResult = method.conditionalResult;
         }
 
     @Override
     public/private Function<Tuple, Tuple> fn;
+
+    @Override
+    public/private Boolean conditionalResult;
     }

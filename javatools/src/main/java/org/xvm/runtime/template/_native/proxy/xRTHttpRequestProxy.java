@@ -2,6 +2,9 @@ package org.xvm.runtime.template._native.proxy;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import org.xvm.asm.ClassStructure;
@@ -18,10 +21,14 @@ import org.xvm.runtime.Frame;
 import org.xvm.runtime.ObjectHandle;
 import org.xvm.runtime.TemplateRegistry;
 import org.xvm.runtime.TypeComposition;
+import org.xvm.runtime.template.collections.xArray;
+import org.xvm.runtime.template.collections.xByteArray;
 import org.xvm.runtime.template.numbers.xInt64;
 import org.xvm.runtime.template.text.xString;
 import org.xvm.runtime.template.xConst;
+import org.xvm.runtime.template.xException;
 import org.xvm.runtime.template.xNullable;
+import org.xvm.util.Handy;
 import org.xvm.util.ListMap;
 
 /**
@@ -47,6 +54,7 @@ public class xRTHttpRequestProxy
         {
         super.initNative();
 
+        markNativeProperty("body");
         markNativeProperty("headers");
         markNativeProperty("method");
         markNativeProperty("uri");
@@ -66,15 +74,35 @@ public class xRTHttpRequestProxy
         RequestHandle hNode = (RequestHandle) hTarget;
         switch (sPropName)
             {
+            case "body":
+                {
+                HttpExchange exchange = hNode.f_exchange;
+                InputStream  body     = exchange.getRequestBody();
+
+                if (body == null)
+                    {
+                    return frame.assignValue(iReturn, xNullable.NULL);
+                    }
+                try
+                    {
+                    byte[]       ab    = body.readAllBytes();
+                    ObjectHandle hBody = xByteArray.makeHandle(ab, xArray.Mutability.Constant);
+                    return frame.assignValue(iReturn, hBody);
+                    }
+                catch (IOException e)
+                    {
+                    return frame.raiseException(xException.ioException(frame, e.getMessage()));
+                    }
+                }
+            case "headers":
+                {
+                return getPropertyHeaders(frame, hNode, iReturn);
+                }
             case "method":
                 {
                 HttpExchange exchange = hNode.f_exchange;
                 String       sMethod  = exchange.getRequestMethod().toUpperCase();
                 return frame.assignValue(iReturn, makePossiblyNullHandle(sMethod));
-                }
-            case "headers":
-                {
-                return getPropertyHeaders(frame, hNode, iReturn);
                 }
             case "uri":
                 {

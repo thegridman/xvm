@@ -63,8 +63,8 @@ class Router
 
         // find the routes matching the URI path filtered on matching media types
         List<UriRouteMatch> matches = findRoutes(method, req)
-                .filter(match -> (!permitsBody || match.consumes(contentType))
-                                 && match.produces(acceptedProducedTypes), new Array())
+                .filter(match -> (!permitsBody || match.canConsume(contentType))
+                                 && match.canProduce(acceptedProducedTypes), new Array())
                 .as(List<UriRouteMatch>);
 
         if (matches.size <= 1)
@@ -77,7 +77,7 @@ class Router
             {
             // take the highest priority accepted type
             MediaType           mediaType    = acceptedProducedTypes[0];
-            List<UriRouteMatch> mostSpecific = matches.filter(match -> match.produces(mediaType), new Array()).as(List<UriRouteMatch>);
+            List<UriRouteMatch> mostSpecific = matches.filter(match -> match.canProduce(mediaType), new Array()).as(List<UriRouteMatch>);
 
             if (!mostSpecific.empty || !acceptedProducedTypes.contains(MediaType.ALL_TYPE))
                 {
@@ -98,7 +98,7 @@ class Router
                     explicitlyConsumedRoutes.add(match);
                     }
 
-                if (explicitlyConsumedRoutes.empty && match.consumes(contentType))
+                if (explicitlyConsumedRoutes.empty && match.canConsume(contentType))
                     {
                     consumesRoutes.add(match);
                     }
@@ -149,12 +149,12 @@ class Router
         URI                  uri     = req.uri;
         for (UriRoute route : routes)
             {
-            if (UriRouteMatch match := route.match(uri))
+            if (route.matchesMethod(method))
                 {
-                matches.add(match);
-                }
-            else
-                {
+                if (UriRouteMatch match := route.match(uri))
+                    {
+                    matches.add(match);
+                    }
                 }
             }
         return matches;
@@ -214,6 +214,12 @@ class Router
         public/private MediaType[] produces;
 
         // ----- UriRoute implementation -----------------------------------------------------------
+
+        @Override
+        Boolean matchesMethod(HttpMethod method)
+            {
+            return this.httpMethod == method;
+            }
 
         @Override
         conditional UriRouteMatch match(String uri)

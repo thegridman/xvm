@@ -6,4 +6,6 @@ const RTHttpRequestProxy
     @Override String method.get() { TODO("native"); }
 
     @Override String uri.get() { TODO("native"); }
+
+    @Override Byte[]? body.get() { TODO("native"); }
     }

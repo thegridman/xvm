@@ -3,6 +3,8 @@
  */
 module web.xtclang.org
     {
+    package json import json.xtclang.org;
+
     import ecstasy.reflect.Parameter;
 
     /**
@@ -94,18 +96,51 @@ module web.xtclang.org
         }
 
     /**
+     * A mixin to indicate the media-types accepted by a particular component.
+     */
+    mixin Accepts(String mediaType = "*/*")
+            into Method
+        {
+        }
+
+    /**
+     * A mixin to indicate that a Parameter is bound to a request value.
+     */
+    mixin ParameterBinding(String templateParameter = "")
+            into Parameter
+        {
+        }
+
+    /**
      * A mixin to indicate that a Parameter is bound to a request URI path segment.
      */
-    mixin PathParam(String name = "", Object? defaultValue = Null)
-            into Parameter
+    mixin PathParam(String templateParameter = "")
+            extends ParameterBinding(templateParameter)
         {
         }
 
     /**
      * A mixin to indicate that a Parameter is bound to a request URI query parameter.
      */
-    mixin QueryParam(String name = "", Object? defaultValue = Null)
-            into Parameter
+    mixin QueryParam(String templateParameter = "")
+            extends ParameterBinding(templateParameter)
+        {
+        }
+
+    /**
+     * A mixin to indicate that a Parameter is bound to a request header value.
+     */
+    mixin HeaderParam(String templateParameter = "")
+            extends ParameterBinding(templateParameter)
+        {
+        }
+
+
+    /**
+     * A mixin to indicate that a value is bound to a request or response body.
+     */
+    mixin Body
+        into Parameter
         {
         }
 
@@ -115,5 +150,19 @@ module web.xtclang.org
     interface ExecutableFunction
         {
         @RO Function<Tuple, Tuple> fn;
+
+        @RO Boolean conditionalResult;
         }
+
+    /**
+     * Indicates a http error with a specific status code.
+     */
+    const HttpException(HttpStatus status, String? text = Null, Exception? cause = Null)
+            extends Exception(text, cause);
+
+    /**
+     * Indicates that a web resource does not exist.
+     */
+    const NotFound(String? text = Null, Exception? cause = Null)
+            extends HttpException(HttpStatus.NotFound, text, cause);
     }

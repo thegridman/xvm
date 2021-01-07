@@ -11,11 +11,8 @@ public interface ParameterBinderRegistry<S>
      * Adds a parameter binder to the registry.
      *
      * @param binder the binder to add
-     *
-     * @param <T> The parameter type
-     * @param <ST> The source type
      */
-    <T, ST extends S> void addParameterBinder(ParameterBinder<T, ST> binder)
+    void addParameterBinder(ParameterBinder<S> binder)
         {
         throw new UnsupportedOperation("Binder registry is not mutable");
         }
@@ -30,5 +27,5 @@ public interface ParameterBinderRegistry<S>
      * @return True iff a ParameterBinder exists for the given parameter
      * @return the ParameterBinder for the given parameter
      */
-    <T> conditional ParameterBinder<T, S> findParameterBinder(Parameter<T> parameter, S source);
+    conditional ParameterBinder<S> findParameterBinder(Parameter parameter, S source);
     }

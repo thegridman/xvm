@@ -7,6 +7,11 @@ interface RouteMatch
         extends ExecutableFunction
     {
     /**
+     * The specific media types produced by this route.
+     */
+    @RO MediaType[] produces;
+
+    /**
      * The variable values following a successful match.
      */
     @RO Map<String, Object> variableValues;
@@ -59,7 +64,7 @@ interface RouteMatch
      * @param contentType the content type
      * @return True if the media type is accepted
      */
-    Boolean consumes(MediaType? mediaType);
+    Boolean canConsume(MediaType? mediaType);
 
     /**
      * Determine whether the specified content type is an explicitly accepted type.
@@ -76,7 +81,7 @@ interface RouteMatch
      * @param acceptableTypes the acceptable media types
      * @return True if the route produces any of the given media types
      */
-    Boolean produces(MediaType[] acceptableTypes);
+    Boolean canProduce(MediaType[] acceptableTypes);
 
     /**
      * Determine whether the route produces the given media type.
@@ -84,9 +89,9 @@ interface RouteMatch
      * @param acceptableType the acceptable media type
      * @return True if the route produces the given media type
      */
-    Boolean produces(MediaType acceptableType)
+    Boolean canProduce(MediaType acceptableType)
         {
-        return produces([acceptableType]);
+        return canProduce([acceptableType]);
         }
 
     /**
@@ -158,7 +163,7 @@ console.println($"RouteMatch.fulfill - argumentName={argumentName} value={value}
      *
      * @return the execution result
      */
-    Tuple<Object> execute()
+    Tuple execute()
         {
         return execute(Map<String, Object>:[]);
         }
@@ -169,16 +174,8 @@ console.println($"RouteMatch.fulfill - argumentName={argumentName} value={value}
      * requiredParameters property.
      *
      * @param parameterValues the parameter values
+     *
      * @return the execution result
      */
-    Tuple<Object> execute(Map<String, Object> parameterValues);
-
-    // ToDo: encapsulate this in a proper class that does all the parameter resolution
-    void execute(HttpRequest req, HttpResponse resp)
-        {
-        // ToDo - need to map URI and request values to parameters
-        Tuple<Object> result = fn.invoke(Tuple:());
-        // ToDo - need to map handler return types to response
-        resp.body = result[0];
-        }
+    Tuple execute(Map<String, Object> parameterValues);
     }

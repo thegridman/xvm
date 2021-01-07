@@ -1,22 +1,43 @@
 import ecstasy.reflect.Parameter;
 
+import web.QueryParam;
+
 /**
  * A parameter binder that binds values from a http request's URI query parameters.
  */
-const QueryParameterBinder<ParamType>
-        implements ParameterBinder<ParamType, HttpRequest>
+const QueryParameterBinder
+        implements ParameterBinder<HttpRequest>
     {
     @Override
-    BindingResult<ParamType> bind(Parameter<ParamType> parameter, HttpRequest request)
+    <ParamType> BindingResult<ParamType> bind(Parameter<ParamType> parameter, HttpRequest request)
         {
-        Map<String, List<String>> params = request.parameters;
-        // ToDo: this process is actually a lot more complex
-        // The parameter could be annotated with a name or pattern e.g. ?foo*
-        // The value could need conversion.
-        if (String name := parameter.hasName())
+@Inject Console console;
+console.println($"QueryParameterBinder: Parameter={parameter}");
+        Parameter queryParam = parameter;
+        if (queryParam.is(QueryParam))
             {
-            if (List<String> list := params.get(name))
+console.println($"QueryParameterBinder: Parameter is a QueryParam");
+
+            String name = "";
+            if (queryParam.is(ParameterBinding))
                 {
+console.println($"QueryParameterBinder: Parameter is a ParameterBinding name={queryParam.templateParameter}");
+
+                name = queryParam.templateParameter;
+                }
+            if (name == "")
+                {
+                assert name := parameter.hasName();
+                }
+console.println($"QueryParameterBinder: Parameter name={name}");
+
+            Map<String, List<String>> queryParamMap = request.parameters;
+            // ToDo: this process is actually a lot more complex
+            // The parameter could be annotated with a name or pattern e.g. ?foo*
+            // The value could need conversion.
+            if (List<String> list := queryParamMap.get(name))
+                {
+console.println($"QueryParameterBinder: Parameter queryParam={list}");
                 if (!list.empty)
                     {
                     return new BindingResult<ParamType>(list[0].as(ParamType), True);

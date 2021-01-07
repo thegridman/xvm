@@ -5,4 +5,6 @@ interface HttpRequestProxy
     @RO String method;
 
     @RO String uri;
+
+    @RO Byte[]? body;
     }

@@ -12,4 +12,12 @@ interface Route
      * The media-types that the route produces.
      */
     @RO MediaType[] produces;
+
+    /**
+     * Determine whether this route matches a specific HttpMethod type.
+     */
+    Boolean matchesMethod(HttpMethod method)
+        {
+        return True;
+        }
     }

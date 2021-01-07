@@ -93,4 +93,9 @@ class HttpAttributes
      * Attribute used to store the MethodInvocationContext by declarative client.
      */
     static String INVOCATION_CONTEXT = PREFIX + ".invocationContext";
+
+    /**
+     * Attribute used to store the request body.
+     */
+    static String BODY = PREFIX + ".body";
     }

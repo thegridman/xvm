@@ -174,6 +174,7 @@ val compileWeb = tasks.register<JavaExec>("compileWeb") {
             "-o", "$libDir",
             "-L", "$coreLib",
             "-L", "$bridgeLib",
+            "-L", "$libDir",
             "$webMain/x/module.x")
     main = "org.xvm.tool.Compiler"
 }

@@ -29,9 +29,21 @@ class DefaultUriRouteMatch
     public/private UriRoute route;
 
     @Override
+    MediaType[] produces.get()
+        {
+        return route.produces;
+        }
+
+    @Override
     Function<Tuple, Tuple> fn.get()
         {
         return route.executable.fn;
+        }
+
+    @Override
+    Boolean conditionalResult.get()
+        {
+        return route.executable.conditionalResult;
         }
 
     @Override
@@ -53,7 +65,7 @@ class DefaultUriRouteMatch
         }
 
     @Override
-    Boolean consumes(MediaType? mediaType)
+    Boolean canConsume(MediaType? mediaType)
         {
         if (route.consumes.size > 0 && mediaType.is(MediaType))
             {
@@ -72,7 +84,7 @@ class DefaultUriRouteMatch
         }
 
     @Override
-    Boolean produces(MediaType[] acceptableTypes)
+    Boolean canProduce(MediaType[] acceptableTypes)
         {
         return acceptableTypes.size == 0 || anyMediaTypesMatch(route.produces, acceptableTypes);
         }
@@ -102,7 +114,7 @@ class DefaultUriRouteMatch
         }
 
     @Override
-    Tuple<Object> execute(Map<String, Object> parameterValues)
+    Tuple execute(Map<String, Object> parameterValues)
         {
         Tuple parameters = Tuple:();
 
@@ -113,20 +125,24 @@ class DefaultUriRouteMatch
 
         for (Parameter param : fn.params)
             {
-            if (String name := param.hasName())
+            String name = "";
+            if (param.is(ParameterBinding))
                 {
-                if (Object paramValue := parameterValues.get(name))
-                    {
-                    parameters = parameters.add(convert(param, paramValue));
-                    }
-                else if (Object variableValue := variableValues.get(name))
-                    {
-                    parameters = parameters.add(convert(param, variableValue));
-                    }
-                else if (Object defaultValue := param.defaultValue())
-                    {
-                    parameters = parameters.add(defaultValue);
-                    }
+                name = param.templateParameter;
+                }
+
+            if (name == "")
+                {
+                assert name := param.hasName();
+                }
+
+            if (Object paramValue := parameterValues.get(name))
+                {
+                parameters = parameters.add(convert(param, paramValue));
+                }
+            else if (Object variableValue := variableValues.get(name))
+                {
+                parameters = parameters.add(convert(param, variableValue));
                 }
             else if (Object defaultValue := param.defaultValue())
                 {

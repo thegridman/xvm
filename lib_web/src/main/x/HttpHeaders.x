@@ -220,6 +220,24 @@ class HttpHeaders
         return Null;
         }
 
+    ListMap<String, String[]> toMap()
+        {
+        ListMap<String, String[]> map = new ListMap();
+        map.putAll(headers);
+        return map;
+        }
+
+    Tuple<String, String[]>[] toTuples()
+        {
+        Tuple<String, String[]>[] tuples = new Array(headers.size);
+        Int                       i      = 0;
+        for (HashMap.Entry entry : headers.entries)
+            {
+            tuples[i++] = (entry.key.as(String), entry.value.as(String[]));
+            }
+        return tuples;
+        }
+
     // ----- Stringable interface implementation ---------------------------------------------------
 
     @Override
@@ -273,6 +291,4 @@ class HttpHeaders
                 break;
             }
         }
-
-    // ----- constants -----------------------------------------------------------------------------
     }

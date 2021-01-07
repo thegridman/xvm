@@ -13,13 +13,35 @@ class RequestBinderRegistry
         binders.add(new QueryParameterBinder());
         }
 
-    private Array<ParameterBinder> binders;
+    private Array<ParameterBinder<HttpRequest>> binders;
 
     @Override
-    <T> conditional ParameterBinder<T, HttpRequest>
-    findParameterBinder(Parameter<T> parameter, HttpRequest source)
+    void addParameterBinder(ParameterBinder<HttpRequest> binder)
         {
-        return True, binders[0].as(ParameterBinder<T, HttpRequest>);
+        binders.add(binder);
+        }
+
+    @Override
+    conditional ParameterBinder<HttpRequest>
+    findParameterBinder(Parameter parameter, HttpRequest source)
+        {
+        ParameterBinder<HttpRequest>? binder = Null;
+        for (ParameterBinder<HttpRequest> pb : binders)
+            {
+            if (pb.canBind(parameter))
+                {
+                if (binder == Null || binder.priority < pb.priority)
+                    {
+                    binder = pb;
+                    }
+                }
+            }
+
+        if (binder == Null)
+            {
+            return False;
+            }
+        return True, binder;
         }
 
     /**
@@ -37,7 +59,7 @@ class RequestBinderRegistry
             {
             if (String name := p.hasName())
                 {
-                if (ParameterBinder<Object, HttpRequest> binder := findParameterBinder(p, req))
+                if (ParameterBinder<HttpRequest> binder := findParameterBinder(p, req))
                     {
                     BindingResult result = binder.bind(p, req);
                     if (result.bound)

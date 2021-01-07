@@ -492,7 +492,7 @@ class Lexer
         while (False);
 
         reader.position = start;
-        String lit = reader.nextString(count);
+        String lit = reader.nextString(count + 1);
         return fp ? new FPLiteral(lit) : new IntLiteral(lit);
         }
 

@@ -9,8 +9,15 @@ import ecstasy.reflect.Parameter;
  * @param <ParamType> the parameter type
  * @param <Source>    the type of the value source
  */
-public interface ParameterBinder<ParamType, Source>
+public interface ParameterBinder<Source>
     {
+    static Int DefaultPriority = 0;
+
+    @RO Int priority.get()
+        {
+        return DefaultPriority;
+        }
+
     /**
      * Bind the given parameter from the given source.
      *
@@ -19,5 +26,13 @@ public interface ParameterBinder<ParamType, Source>
      *
      * @return the result of the binding
      */
-    BindingResult<ParamType> bind(Parameter<ParamType> param, Source source);
+    <ParamType> BindingResult<ParamType> bind(Parameter<ParamType> param, Source source);
+
+    /**
+     * Returns True if this binder can bind the specified Parameter.
+     */
+    Boolean canBind(Parameter param)
+        {
+        return True;
+        }
     }

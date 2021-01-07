@@ -1,5 +1,6 @@
 package org.xvm.runtime.template._native.proxy;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -14,7 +15,10 @@ import org.xvm.runtime.ObjectHandle;
 import org.xvm.runtime.TemplateRegistry;
 import org.xvm.runtime.template._native.reflect.xRTFunction;
 import org.xvm.runtime.template._native.reflect.xRTFunction.FunctionHandle;
+import org.xvm.runtime.template.collections.xArray;
 import org.xvm.runtime.template.collections.xByteArray;
+import org.xvm.runtime.template.collections.xTuple;
+import org.xvm.runtime.template.text.xString;
 import org.xvm.runtime.template.xService;
 
 /**
@@ -85,9 +89,22 @@ public class xRTWebServerProxy
                             {
                             try
                                 {
-                                ObjectHandle.JavaLong      nStatus = (ObjectHandle.JavaLong) _ahArg[0];
-                                xByteArray.ByteArrayHandle abBody  = (xByteArray.ByteArrayHandle) _ahArg[1];
+                                ObjectHandle.JavaLong      nStatus  = (ObjectHandle.JavaLong) _ahArg[0];
+                                xByteArray.ByteArrayHandle abBody   = (xByteArray.ByteArrayHandle) _ahArg[1];
+                                xArray.GenericArrayHandle  ahHeader = (xArray.GenericArrayHandle) _ahArg[2];
 
+                                Headers responseHeaders = exchange.getResponseHeaders();
+                                for (int i = 0; i < ahHeader.m_cSize; i++)
+                                    {
+                                    xTuple.TupleHandle        hTuple  = (xTuple.TupleHandle) ahHeader.m_ahValue[i];
+                                    xString.StringHandle      hName   = (xString.StringHandle) hTuple.m_ahValue[0];
+                                    xArray.GenericArrayHandle hValues = (xArray.GenericArrayHandle) hTuple.m_ahValue[1];
+                                    for (int j = 0; j < hValues.m_cSize; j++)
+                                        {
+                                        xString.StringHandle hValue = (xString.StringHandle) hValues.m_ahValue[j];
+                                        responseHeaders.add(hName.getStringValue(), hValue.getStringValue());
+                                        }
+                                    }
                                 exchange.sendResponseHeaders((int) nStatus.getValue(), abBody.m_cSize);
                                 try (OutputStream out = exchange.getResponseBody())
                                     {

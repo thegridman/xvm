@@ -26,7 +26,7 @@ const MediaType
         if (name.indexOf(";"))
             {
             String[] tokenWithArgs = name.split(';');
-            String[] paramsList    = tokenWithArgs[1..tokenWithArgs.size];
+            String[] paramsList    = tokenWithArgs[1..tokenWithArgs.size - 1];
             withoutArgs = tokenWithArgs[0];
             for (String param : paramsList)
                 {
@@ -350,16 +350,6 @@ const MediaType
      * XML: text/xml.
      */
     static MediaType TEXT_XML_TYPE = new MediaType(TEXT_XML);
-
-    /**
-     * JSON: text/json.
-     */
-    static String TEXT_JSON = "text/json";
-
-    /**
-     * JSON: text/json.
-     */
-    static MediaType TEXT_JSON_TYPE = new MediaType(TEXT_JSON);
 
     /**
      * Plain Text: text/plain.
