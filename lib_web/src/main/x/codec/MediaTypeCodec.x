@@ -5,7 +5,6 @@ import ecstasy.io.ByteArrayOutputStream;
  * Represents a codec for a particular media type. For example application/json.
  */
 interface MediaTypeCodec
-//        extends immutable Const
     {
     /**
      * Return the MediaTypes supported by this codec.

@@ -3,6 +3,14 @@
  */
 class MediaTypeCodecRegistry
     {
+    /**
+     * Construct a MediaTypeCodecRegistry.
+     * The registry will be initialized with the default codecs along
+     * with any additional codecs provided to the constructor.
+     *
+     * @param codecs  an optional array of additional MediaTypeCodec
+     *                instances to initialize the registry with.
+     */
     construct (MediaTypeCodec[] codecs = [])
         {
         codecsByType      = new HashMap();
@@ -25,32 +33,43 @@ class MediaTypeCodecRegistry
             }
         }
 
+    /**
+     * A map of MediaType to MediaTypeCodec.
+     */
     private Map<MediaType, MediaTypeCodec> codecsByType;
 
+    /**
+     * A map of MediaType extension to MediaTypeCodec.
+     */
     private Map<String, MediaTypeCodec> codecsByExtension;
 
+    /**
+     * Find the MediaTypeCodec that can encode or decode the specified MediaType.
+     * A MediaTypeCodec will be returned if a codec is registered directly with
+     * the media type or alternatively a codec is registered with the requested
+     * media type's extension.
+     *
+     * @param type  the MediatType to encode or decode
+     *
+     * @return a True iff a MediaTypeCodec is associated to the requested MediaType
+     * @return the MediaTypeCodec associated with the specified MediaType (conditional)
+     */
     conditional MediaTypeCodec findCodec(MediaType type)
         {
-@Inject Console console;
-console.println($"findCodec MediaType={type}");
         if (MediaTypeCodec codec := codecsByType.get(type))
             {
-console.println($"findCodec FOUND MediaType={type}");
             return True, codec;
             }
 
-console.println($"findCodec trying extensions MediaType={type} extension={type.extension}");
         String? ext = type.extension;
         if (ext != Null)
             {
             if (MediaTypeCodec codec := codecsByExtension.get(ext))
                 {
-console.println($"findCodec FOUND MediaType={type}");
                 return True, codec;
                 }
             }
 
-console.println($"findCodec NOT FOUND MediaType={type}");
         return False;
         }
     }

@@ -1,9 +1,20 @@
 /**
  * A representation of a http request.
  */
-class HttpRequest(URI uri, HttpHeaders headers, HttpMethod method)
-        extends HttpMessage(headers)
+class HttpRequest(URI uri, HttpHeaders headers, HttpMethod method, Object? body)
+        extends HttpMessage(headers, body)
     {
+
+    construct (URI uri, Map<String, String[]> headerMap, HttpMethod method, Object? body)
+        {
+        HttpHeaders headers = new HttpHeaders();
+        for (Map<String, String[]>.Entry entry : headerMap.entries)
+            {
+            headers.set(entry.key, new Array(Mutable, entry.value));
+            }
+        construct HttpRequest(uri, headers, method, body);
+        }
+
     /**
      * @return the accepted media types.
      */

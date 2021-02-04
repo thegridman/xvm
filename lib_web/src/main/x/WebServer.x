@@ -1,4 +1,6 @@
-
+/**
+ * A web server.
+ */
 class WebServer
     {
     import ecstasy.io.ByteArrayOutputStream;
@@ -12,18 +14,33 @@ class WebServer
 
     @Inject Console console;
 
+    /**
+     * The proxy to the native web server.
+     */
     @Inject WebServerProxy proxy;
 
+    /**
+     * The router holding the various endpoints that requests can be routed to.
+     */
     private Router router = new Router();
 
+    /**
+     * A registry of binders that can bind various attributes of a http request
+     * to different parameters of an endpoint method.
+     */
     private RequestBinderRegistry binderRegistry = new RequestBinderRegistry();
 
+    /**
+     * The registry of codecs for converting request and response bodies to
+     * endpoint method parameters. For example deserializing a json request
+     * body to a specific Object type.
+     */
     private MediaTypeCodecRegistry codecRegistry = new MediaTypeCodecRegistry();
 
     /**
-     * Add all of the Routes for the annotated endpoints in the specified Type.
+     * Add all of the Routes from the annotated endpoints in the specified object.
      *
-     * @param type  the value with annotated endpoints
+     * @param o  the class with annotated endpoints
      *
      * @return  this WebServer
      */
@@ -32,6 +49,8 @@ class WebServer
         router.addRoutes(o);
         return this;
         }
+
+    // ToDo: Methods to add handlers for http response statuses and exceptions
 
     /**
      * Start the web server.
@@ -42,43 +61,35 @@ class WebServer
         proxy.start(handle);
         }
 
+    /**
+     * The request handler that is called by the native web server.
+     */
     void handle(HttpRequestProxy req, WebServerProxy.Responder responder)
         {
         try
             {
-            URI         uri      = URI.create(req.uri);
-            HttpMethod  method   = HttpMethod.fromName(req.method);
-            HttpHeaders headers = new HttpHeaders();
-
-console.println($"In WebServer.handle() uri={uri}");
-console.println($"In WebServer.handle() method={method}");
-
-            for (Map<String, String[]>.Entry entry : req.headers.entries)
-                {
-                headers.set(entry.key, new Array(Mutable, entry.value));
-console.println($"In WebServer.handle() Header: {entry.key} {entry.value}");
-                }
-
-            HttpRequest         httpReq  = new HttpRequest(uri, headers, method);
+            URI                 uri      = URI.create(req.uri);
+            HttpMethod          method   = HttpMethod.fromName(req.method);
+            HttpRequest         httpReq  = new HttpRequest(uri, req.headers, method, req.body);
             List<UriRouteMatch> routes   = router.findClosestRoute(httpReq);
             HttpResponse        httpResp;
 
-            httpReq.body = req.body;
-
             if (routes.size == 1)
                 {
-                UriRouteMatch establishedRoute = routes[0];
-                httpReq.attributes.add(HttpAttributes.ROUTE, establishedRoute.route);
-                httpReq.attributes.add(HttpAttributes.ROUTE_MATCH, establishedRoute);
-                httpReq.attributes.add(HttpAttributes.URI_TEMPLATE,
-                                       establishedRoute.route.uriMatchTemplate.template);
+                // a single endpoint matches the request
+                UriRouteMatch matchedRoute = routes[0];
 
-                RouteMatch bound     = binderRegistry.bind(establishedRoute, httpReq);
-                Tuple      result    = bound.execute();
+                httpReq.attributes.add(HttpAttributes.ROUTE, matchedRoute.route);
+                httpReq.attributes.add(HttpAttributes.ROUTE_MATCH, matchedRoute);
+
+                // bind values from the request to the endpoint method parameters and execute the method call
+                RouteMatch bound  = binderRegistry.bind(matchedRoute, httpReq);
+                Tuple      result = bound.execute();
 
                 if (bound.conditionalResult && result.size > 0 && result[0].as(Boolean) == False)
                     {
-                    // a False conditional result is equivalent to a 404 response
+                    // the method executed is a conditional method that has returned False as the
+                    // first element of the Tuple
                     httpResp = new HttpResponse(HttpStatus.NotFound);
                     }
                 else
@@ -89,65 +100,63 @@ console.println($"In WebServer.handle() Header: {entry.key} {entry.value}");
                 }
             else if (routes.size == 0)
                 {
-                // ToDo: should be handled by a 404 status handler
+                // no endpoints match the request
+                // ToDo: should be handled by a 404 status handler if one has been added
                 httpResp = new HttpResponse(HttpStatus.NotFound);
                 }
             else
                 {
-                // ToDo: we can attempt to narrow down multiple results using other rules
+                // At this point there are multiple endpoints that match the request
+                // ToDo: we should attempt to narrow down multiple results using other rules
                 httpResp = new HttpResponse(HttpStatus.MultipleChoices);
                 }
 
-            // ToDo: Check the status and execute any route for the status
+            // ToDo: Check the status and execute any status handler for the status
 
-            writeResponse(httpResp, responder);
+            sendResponse(httpResp, responder);
             }
         catch (Exception e)
             {
-            // ToDo: this should be handled by an exception handling route
-            if (e.is(HttpException))
-                {
-                writeResponse(new HttpResponse(e.status), responder);
-                }
-            else
-                {
-                @Inject Console console;
-                console.println(e.toString());
-                writeResponse(new HttpResponse(HttpStatus.InternalServerError), responder);
-                }
+            handleException(e, responder);
             }
         }
 
     /**
      * Process the `Tuple` returned from a request handler into a `HttpResponse`.
+     *
+     * @param tuple      the `Tuple` of return values from the endpoint method execution
+     * @param method     the http request method (i.e. GET, POST, etc)
+     * @param mediaType  the media type of the response body
+     *
+     * @return a HttpResponse
      */
-    HttpResponse encodeResponse(Tuple t, HttpMethod method, MediaType mediaType)
+    HttpResponse encodeResponse(Tuple tuple, HttpMethod method, MediaType mediaType)
         {
-console.println($"In WebServer.encodeResponse() - mediaType={mediaType}");
-
         HttpResponse httpResp = new HttpResponse();
         httpResp.headers.add("Content-Type", mediaType.name);
 
-        if (t.size == 0)
+        if (tuple.size == 0)
             {
-            // method had a void return type
+            // method had a void return type so there is no response body
             if (HttpMethod.permitsRequestBody(method))
                 {
                 // method allows a body so set the length to zero
                 httpResp.headers.add("Content-Length", "0");
-                //httpResp.headers.contentLength = 0;
                 }
             return httpResp;
             }
 
-        if (t[0].is(HttpResponse))
+        if (tuple[0].is(HttpResponse))
             {
-            return t[0].as(HttpResponse);
+            // the endpoint returned a HttpResponse so use that as the response
+            return tuple[0].as(HttpResponse);
             }
 
-        for (Int i : [0..t.size))
+        // Iterate over the return values from the endpoint assigning them to the
+        // relevant parts of the request
+        for (Int i : [0..tuple.size))
             {
-            Object o = t[i];
+            Object o = tuple[i];
             if (o.is(HttpStatus))
                 {
                 httpResp.status = o;
@@ -158,20 +167,26 @@ console.println($"In WebServer.encodeResponse() - mediaType={mediaType}");
                 }
             }
 
-        if (MediaTypeCodec codec := codecRegistry.findCodec(mediaType))
+        // If there is a body convert it to the requires response media type
+        if (httpResp.body != Null)
             {
-console.println($"In WebServer.encodeResponse() - Found codec for mediaType={mediaType} body={httpResp.body}");
-            if (httpResp.body != Null)
+            if (MediaTypeCodec codec := codecRegistry.findCodec(mediaType))
                 {
                 httpResp.body = codec.encode(httpResp.body);
-console.println($"In WebServer.encodeResponse() - Encoded mediaType={mediaType} body={httpResp.body}");
                 }
+            // ToDo: the else should probably be an error/exception
             }
 
         return httpResp;
         }
 
-    void writeResponse(HttpResponse response, WebServerProxy.Responder responder)
+    /**
+     * Send the response to the native responder.
+     *
+     * @param response   the http response to write
+     * @param responder  the responder function to call to send the response
+     */
+    void sendResponse(HttpResponse response, WebServerProxy.Responder responder)
         {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -192,7 +207,12 @@ console.println($"In WebServer.encodeResponse() - Encoded mediaType={mediaType} 
         }
 
     /**
-     * Determine the default content type for the response.
+     * Determine the default content type for the response body.
+     *
+     * @param request  the http request
+     * @param route    the route to the endpoint handling the request
+     *
+     * @return the MediaType of the response body
      */
     MediaType resolveDefaultResponseContentType(HttpRequest request, RouteMatch route)
         {
@@ -211,5 +231,27 @@ console.println($"In WebServer.encodeResponse() - Encoded mediaType={mediaType} 
             return produces[0];
             }
         return MediaType.APPLICATION_JSON_TYPE;
+        }
+
+    /**
+     * Handle and exception and send a response back to the http request caller.
+     *
+     * @param error      the Exception that occurred
+     * @param responder  the responder function to call to send the response
+     */
+    void handleException(Exception error, WebServerProxy.Responder responder)
+        {
+        // ToDo: eventually we should allow custom exception handling routes to be specified
+
+        @Inject Console console;
+        console.println(error.toString());
+        if (error.is(HttpException))
+            {
+            sendResponse(new HttpResponse(error.status), responder);
+            }
+        else
+            {
+            sendResponse(new HttpResponse(HttpStatus.InternalServerError), responder);
+            }
         }
     }

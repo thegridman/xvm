@@ -3,10 +3,10 @@
  */
 class HttpMessage
     {
-    construct(HttpHeaders headers)
+    construct(HttpHeaders headers, Object? body = Null)
         {
         this.headers    = headers;
-        this.body       = Null;
+        this.body       = body;
         this.attributes = new HttpAttributes();
         }
 

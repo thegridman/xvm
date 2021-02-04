@@ -4,7 +4,7 @@ import ecstasy.io.UTF8Writer;
 import json.Schema;
 
 /**
- * A codec that handles the application/json MediaType.
+ * A codec that handles the `application/json` MediaType.
  */
 const JsonCodec
         implements MediaTypeCodec

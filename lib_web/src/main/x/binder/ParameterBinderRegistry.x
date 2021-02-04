@@ -5,7 +5,7 @@ import ecstasy.reflect.Parameter;
  *
  * @param <S> the source type
  */
-public interface ParameterBinderRegistry<S> 
+interface ParameterBinderRegistry<S>
     {
     /**
      * Adds a parameter binder to the registry.

@@ -155,23 +155,19 @@ class DefaultUriRouteMatch
 
     private Object convert(Parameter parameter, Object value)
         {
-        // ToDo:
+        // ToDo: add conversion logic when we have a converter registry
         return value;
         }
 
     @Override
     UriRouteMatch newFulfilled(Map<String, Object> values, List<Parameter> parameters)
         {
-@Inject
-Console console;
-console.println($"In newFulfilled values={values} parameters={parameters}");
-for (Map.Entry entry : values.entries)
-    {
-console.println($"In newFulfilled values.entry={entry}");
-    }
         return new FulfilledUriRouteMatch(info, route, values, parameters);
         }
 
+    /**
+     * A DefaultUriRouteMatch instance that has its parameters bound to values.
+     */
     static class FulfilledUriRouteMatch
             extends DefaultUriRouteMatch
         {
