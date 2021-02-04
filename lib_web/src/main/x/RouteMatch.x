@@ -102,10 +102,6 @@ interface RouteMatch
      */
     RouteMatch! fulfill(Map<String, Object> arguments)
         {
-@Inject
-Console console;
-console.println($"RouteMatch.fulfill - args={arguments.size}");
-
         if (arguments.size == 0)
             {
             return this;
@@ -130,13 +126,10 @@ console.println($"RouteMatch.fulfill - args={arguments.size}");
 
             for (Parameter requiredParameter : parameters)
                 {
-console.println($"RouteMatch.fulfill - requiredParameter={requiredParameter}");
                 if (String argumentName := requiredParameter.hasName())
                     {
-console.println($"RouteMatch.fulfill - argumentName={argumentName}");
                     if (Object value := arguments.get(argumentName))
                         {
-console.println($"RouteMatch.fulfill - argumentName={argumentName} value={value}");
                         if (bodyParameterName != Null && bodyParameterName.as(String) == argumentName)
                             {
                             requiredParameter = bodyParameter.as(Parameter);

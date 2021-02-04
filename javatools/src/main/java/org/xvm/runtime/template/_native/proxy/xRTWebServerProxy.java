@@ -65,7 +65,7 @@ public class xRTWebServerProxy
                     throw new RuntimeException(e);
                     }
 
-                return Op.R_BLOCK;
+                return Op.R_NEXT;
                 }
             }
 

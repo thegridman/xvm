@@ -4,6 +4,7 @@ package org.xvm.runtime;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+import java.util.regex.Pattern;
 import org.xvm.asm.ConstantPool;
 import org.xvm.asm.InjectionKey;
 import org.xvm.asm.MethodStructure;
@@ -17,6 +18,8 @@ import org.xvm.asm.constants.TypeConstant;
 import org.xvm.runtime.ObjectHandle.DeferredCallHandle;
 import org.xvm.runtime.ObjectHandle.JavaLong;
 
+import org.xvm.runtime.template._native.text.xRTPattern;
+import org.xvm.runtime.template.text.xString;
 import org.xvm.runtime.template.xService.ServiceHandle;
 
 import org.xvm.runtime.template.numbers.xIntLiteral.IntNHandle;
@@ -284,7 +287,7 @@ public class CoreContainer
         return hRnd;
         }
 
-    protected ObjectHandle ensureRegExp(Frame frame)
+    protected ObjectHandle ensureRegExp(Frame frame, ObjectHandle hOpts)
         {
         ObjectHandle hRegExp = m_hRegExp;
         if (hRegExp == null)
@@ -302,7 +305,7 @@ public class CoreContainer
         return hRegExp;
         }
 
-    protected ObjectHandle ensureWebServerProxy(Frame frame)
+    protected ObjectHandle ensureWebServerProxy(Frame frame, ObjectHandle hOpts)
         {
         ObjectHandle hServer = m_hWebServer;
         if (hServer == null)

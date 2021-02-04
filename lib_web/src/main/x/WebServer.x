@@ -180,7 +180,7 @@ console.println($"In WebServer.encodeResponse() - Encoded mediaType={mediaType} 
             {
             for (Char c : body)
                 {
-                out.writeBytes(c.utf());
+                out.writeBytes(c.utf8());
                 }
             }
         else if (body.is(Byte[]))

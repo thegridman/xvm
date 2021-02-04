@@ -47,7 +47,7 @@ const TextPlainCodec
         assert:arg value.is(Stringable);
         for (Char c : out.toString())
             {
-            out.writeBytes(c.utf());
+            out.writeBytes(c.utf8());
             }
         }
     }

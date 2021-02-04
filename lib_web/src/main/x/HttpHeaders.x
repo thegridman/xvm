@@ -263,32 +263,28 @@ class HttpHeaders
 
         for (Char char : name)
             {
-            validateHeaderNameElement(char.toInt64());
-            }
-        }
-
-    private void validateHeaderNameElement(Int value)
-        {
-        switch(value)
-            {
-            case 0:    // 0x00
-            case 9:    // '\t'
-            case 10:   // '\n'
-            case 11:   // '\v'
-            case 12:   // '\f'
-            case 13:   // '\r'
-            case 32:   // ' '
-            case 44:   // ','
-            case 58:   // ':'
-            case 59:   // ';'
-            case 61:   // '='
-                throw new IllegalArgument("a header name cannot contain the following prohibited characters: =,;: \\t\\r\\n\\v\\f: " + value);
-            default:
-                if (value < 0)
-                    {
-                    throw new IllegalArgument("a header name cannot contain non-ASCII character: " + value);
-                    }
-                break;
+            Int value = char.toInt64();
+            switch(value)
+                {
+                case 0:    // 0x00
+                case 9:    // '\t'
+                case 10:   // '\n'
+                case 11:   // '\v'
+                case 12:   // '\f'
+                case 13:   // '\r'
+                case 32:   // ' '
+                case 44:   // ','
+                case 58:   // ':'
+                case 59:   // ';'
+                case 61:   // '='
+                    throw new IllegalArgument($"header name '{name}' contains '{char}' one of the prohibited characters: =,;: \\t\\r\\n\\v\\f");
+                default:
+                    if (value < 0 || value > 0x7F)
+                        {
+                        throw new IllegalArgument($"header name '{name}' contains non-ASCII character: {char}");
+                        }
+                    break;
+                }
             }
         }
     }

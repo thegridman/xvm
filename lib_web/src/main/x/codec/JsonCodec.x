@@ -48,7 +48,7 @@ const JsonCodec
             {
             for (Char c : value)
                 {
-                out.writeBytes(c.utf());
+                out.writeBytes(c.utf8());
                 }
             }
         else

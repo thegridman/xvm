@@ -80,5 +80,7 @@ module TestWebApp
         new WebServer()
                 .addRoutes(new UsersApi())
                 .start();
+
+        console.println("Started WebServer http://localhost:8080");
         }
     }
