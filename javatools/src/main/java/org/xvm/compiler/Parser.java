@@ -1604,6 +1604,7 @@ public class Parser
             case ASSERT_TODO:
             case ASSERT_ONCE:
             case ASSERT_TEST:
+            case ASSERT_ASSUME:
             case ASSERT_DBG:
                 return parseAssertStatement();
 
@@ -3786,6 +3787,7 @@ public class Parser
             case ASSERT_TODO:
             case ASSERT_ONCE:
             case ASSERT_TEST:
+            case ASSERT_ASSUME:
             case ASSERT_DBG:
                 {
                 Token keyword = current();
@@ -5878,6 +5880,7 @@ public class Parser
                 case ASSERT_TODO:
                 case ASSERT_ONCE:
                 case ASSERT_TEST:
+                case ASSERT_ASSUME:
                 case ASSERT_DBG:
                 case BREAK:
                 case CLASS:

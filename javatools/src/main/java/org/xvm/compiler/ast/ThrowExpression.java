@@ -210,6 +210,7 @@ public class ThrowExpression
             case ASSERT_RND:
             case ASSERT_ONCE:
             case ASSERT_TEST:
+            case ASSERT_ASSUME:
             case ASSERT_DBG:
                 // throw requires an exception, but T0D0 and various asserts do not; make sure that
                 // the asserts are guaranteed to fail, since they do not & can not produce a value

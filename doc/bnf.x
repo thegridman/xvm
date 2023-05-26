@@ -420,6 +420,7 @@ AssertInstruction                               # (when active, what gets thrown
     "assert:once"                               # runtime, Assertion (only tested "the first time")
     "assert:rnd(" Expression ")"                # runtime (sampling), IllegalState
     "assert:test"                               # test mode (e.g. CI/QC), Assertion
+    "assert:assume"                             # test mode (e.g. CI/QC), Assert a precondition
     "assert:debug"                              # debug mode, breakpoint-only (i.e. no throw)
 
 AssertMessage

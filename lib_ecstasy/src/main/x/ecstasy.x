@@ -123,6 +123,16 @@ module ecstasy.xtclang.org
             extends IllegalState(text, cause);
 
     /**
+     * An `PreconditionFailed` exception is raised when an `assert:assume` statement fails.
+     *
+     * The `assert:assume` statement is typically used in tests to indicate that a the
+     * preconditions for running the test cannot be met so the test is marked as skipped
+     * rather than failed.
+     */
+    const PreconditionFailed(String? text = Null, Exception? cause = Null)
+            extends Exception(text, cause);
+
+    /**
      * An `UnsupportedOperation` exception is raised when an attempt is made to invoke functionality
      * that is not present or has not yet been implemented.
      */

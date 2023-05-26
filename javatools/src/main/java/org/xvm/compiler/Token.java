@@ -547,6 +547,7 @@ public class Token
         ASSERT_TODO  ("assert:TODO"    ),
         ASSERT_ONCE  ("assert:once"    ),
         ASSERT_TEST  ("assert:test"    ),
+        ASSERT_ASSUME("assert:assume"  ),
         ASSERT_DBG   ("assert:debug"   ),
         AVOID        ("avoid"          , true),
         BREAK        ("break"          ),

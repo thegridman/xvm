@@ -61,6 +61,7 @@ public class AssertStatement
             case ASSERT_TODO:
             case ASSERT_ONCE:
             case ASSERT_TEST:
+            case ASSERT_ASSUME:
             case ASSERT_DBG:
                 break;
 
@@ -138,7 +139,8 @@ public class AssertStatement
      */
     public boolean isTestOnly()
         {
-        return keyword.getId() == Id.ASSERT_TEST;
+        Id id = keyword.getId();
+        return id == Id.ASSERT_TEST || id == Id.ASSERT_ASSUME;
         }
 
     /**
@@ -356,6 +358,7 @@ public class AssertStatement
             case ASSERT_BOUNDS                        -> "OutOfBounds";
             case ASSERT_TODO                          -> "UnsupportedOperation";
             case ASSERT_ONCE, ASSERT_RND, ASSERT_TEST -> "Assertion";
+            case ASSERT_ASSUME                        -> "PreconditionFailed";
             case ASSERT_DBG                           -> null;
             };
 

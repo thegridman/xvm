@@ -20,6 +20,7 @@ val jsondb        = project(":lib_jsondb")
 val web           = project(":lib_web")
 val webauth       = project(":lib_webauth")
 val xenia         = project(":lib_xenia")
+val xunit         = project(":lib_xunit")
 
 val ecstasyMain     = "${ecstasy.projectDir}/src/main"
 val turtleMain      = "${turtle.projectDir}/src/main"
@@ -37,6 +38,7 @@ val jsondbMain      = "${jsondb.projectDir}/src/main"
 val webMain         = "${web.projectDir}/src/main"
 val webauthMain     = "${webauth.projectDir}/src/main"
 val xeniaMain       = "${xenia.projectDir}/src/main"
+val xunitMain       = "${xunit.projectDir}/src/main"
 
 val xdkDir          = "$buildDir/xdk"
 val binDir          = "$xdkDir/bin"
@@ -333,6 +335,26 @@ val compileXenia = tasks.register<JavaExec>("compileXenia") {
     mainClass.set("org.xvm.tool.Compiler")
 }
 
+val compileXUnit = tasks.register<JavaExec>("compileXUnit") {
+    group       = "Execution"
+    description = "Build xunit.xtc module"
+
+    dependsOn(javatools.tasks["build"])
+
+    shouldRunAfter(compileNet, compileJson)
+
+    jvmArgs("-Xms1024m", "-Xmx1024m", "-ea")
+
+    classpath(javatoolsJar)
+    args("-o", "$libDir",
+         "-version", "$xdkVersion",
+         "-L", "$coreLib",
+         "-L", "$turtleLib",
+         "-L", "$libDir",
+         "$xunitMain/x/xunit.x")
+    mainClass.set("org.xvm.tool.Compiler")
+}
+
 val compileBridge = tasks.register<JavaExec>("compileBridge") {
     group         = "Execution"
     description   = "Build javatools_bridge.xtc module"
@@ -481,6 +503,15 @@ val build = tasks.register("build") {
 
     if (xeniaSrc > xeniaDest) {
         dependsOn(compileXenia)
+        }
+
+    // compile xunit.xtclang.org
+    val xunitSrc = fileTree(xunitMain).getFiles().stream().
+            mapToLong({f -> f.lastModified()}).max().orElse(0)
+    val xunitDest = file("$libDir/xunit.xtc").lastModified()
+
+    if (xunitSrc > xunitDest) {
+        dependsOn(compileXUnit)
         }
 
     // compile _native.xtclang.org
