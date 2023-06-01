@@ -46,8 +46,7 @@
  */
 mixin Test(String group = Unit, Int priority = 0, Type<Exception>? expectedException = Null)
         implements Orderable
-        into Module | Package | Class | Property | Method | Function
-    {
+        into Module | Package | Class | Property | Method | Function {
     /**
      * Use this [group] value to indicate a normal unit test. This is the default test group name.
      */
@@ -65,12 +64,11 @@ mixin Test(String group = Unit, Int priority = 0, Type<Exception>? expectedExcep
     static String Omit = "omit";
 
     typedef Module | Package | Class | Property | Method | Function as TestTarget;
-    
+
     // ----- Orderable -----------------------------------------------------------------------------
 
-    static <CompileType extends Test> Ordered compare(CompileType value1, CompileType value2)
-        {
+    static <CompileType extends Test> Ordered compare(CompileType value1, CompileType value2) {
         // the reverse of the natural order of an Int
         return value2.priority <=> value1.priority;
-        }
     }
+}
